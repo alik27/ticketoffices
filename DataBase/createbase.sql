@@ -1,0 +1,407 @@
+
+/*Хранимые процедуры*/
+
+/*1. Вывод таблицы билеты для не авторизованного пользователя*/
+go
+create procedure bilet1 as
+SELECT [№ билета], [№ рейса], [признак продажи/возврата], 
+cast([дата продажи/возврата] as varchar(100)) as [дата продажи/возврата], 
+cast([дата отправления] as varchar(100)) as [дата отправления], сумма, [№ вагона], 
+[№ места], [тип вагона]
+FROM Билет
+exec bilet1;
+DROP PROCEDURE bilet1;
+
+exec bilet1;
+exec marshrut1;
+exec raspisanie1;
+exec mesta1;
+
+/*2. Вывод таблицы билеты для авторизованного пользователя*/
+go
+create procedure bilet3 as
+SELECT [№ билета], [№ рейса], [признак продажи/возврата], 
+cast([дата продажи/возврата] as varchar(100)) as [дата продажи/возврата], 
+cast([дата отправления] as varchar(100)) as [дата отправления],[ФИО пассажира],[номер паспорта],[код кассира], сумма, [№ вагона], 
+[№ места], [тип вагона]
+FROM Билет
+exec bilet3;
+DROP PROCEDURE bilet3;
+
+/*3. Вывод таблицы места*/
+go
+create procedure mesta1 as
+SELECT [№ рейса],[№ вагона],[тип вагона],cast([дата отправления] as varchar(100)) as [дата отправления],[№ места], признак
+FROM Места
+exec mesta1;
+DROP PROCEDURE mesta1;
+
+/*4. Вывод таблицы маршрут*/
+go
+create procedure marshrut1 as
+SELECT [№ рейса],[признак типа участка маршрута],[№ участка рейса],[код нас. пункта], [километраж участка],cast([время отправления] as varchar(100)) as [время отправления]
+FROM Маршрут
+exec marshrut1;
+DROP PROCEDURE marshrut1;
+
+/*5. Вывод таблицы расписание*/
+go
+create procedure raspisanie1 as
+SELECT [№ рейса],[день недели отправления],cast([время отправления] as varchar(8)) as [время отправления],[день недели прибытия],cast([время прибытия] as varchar(8)) as [время прибытия],cast([время в пути] as varchar(8)) as [время в пути]
+FROM Расписание
+exec raspisanie1;
+DROP PROCEDURE raspisanie1;
+
+/*6. Вывод номера рейса из таблица расписание*/
+go
+create procedure raspisanie2 as
+SELECT [№ рейса]
+FROM Расписание
+exec raspisanie2;
+DROP PROCEDURE raspisanie2;
+
+/*7. Вывод времени отправления из таблица расписание*/
+go
+create procedure raspisanie3 as
+SELECT cast([время отправления] as varchar(8)) as [время отправления]
+FROM Расписание
+exec raspisanie3;
+DROP PROCEDURE raspisanie3;
+
+/*8. Вывод времени отправления из таблица расписание*/
+go
+create procedure kassirs1 as
+SELECT [Код кассира],[ФИО кассира]
+FROM Кассир
+exec kassirs1;
+DROP PROCEDURE kassirs1;
+
+/*9. Вывод код кассира из таблицы кассиры*/
+go
+create procedure kassirs2 as
+SELECT [Код кассира]
+FROM Кассир
+exec kassirs2;
+DROP PROCEDURE kassirs2;
+
+/*10. Вывод таблицы Населенные_пункты*/
+go
+create procedure punkt1 as
+SELECT [код нас. пункта],наименование
+FROM Населенные_пункты
+exec punkt1;
+DROP PROCEDURE punkt1;
+
+/*11. Вывод таблицы Пункт_отправления*/
+go
+create procedure punktotpr1 as
+SELECT [№ билета],[Код населенного пункта]
+FROM Пункт_отправления
+exec punktotpr1;
+DROP PROCEDURE punktotpr1;
+
+/*12. Вывод код населенного пункта из таблицы населенные пункты*/
+go
+create procedure punktotpr2 as
+SELECT [код нас. пункта]
+FROM Населенные_пункты
+exec punktotpr2;
+DROP PROCEDURE punktotpr2;
+
+/*13. Вывод таблицы Пункт_прибытия*/
+go
+create procedure punktotpr3 as
+SELECT [№ билета],[Код населенного пункта]
+FROM Пункт_прибытия
+exec punktotpr3;
+DROP PROCEDURE punktotpr3;
+
+/*14. Вывод таблицы [Признак типа участка маршрута]*/
+go
+create procedure priznak1 as
+SELECT [Код признака],наименование
+FROM [Признак типа участка маршрута]
+exec priznak1;
+DROP PROCEDURE priznak1;
+
+/*15. Вывод [Код признака] из таблицы [Признак типа участка маршрута]*/
+go
+create procedure priznak2 as
+SELECT [Код признака]
+FROM [Признак типа участка маршрута]
+exec priznak2;
+DROP PROCEDURE priznak2;
+
+/*16. Вывод [№ билета] из таблицы Билет*/
+go
+create procedure bilet2 as
+SELECT [№ билета]
+FROM Билет
+exec bilet2;
+DROP PROCEDURE bilet2;
+
+/*17. Вывод таблицы [Тип вагона]*/
+go
+create procedure vagon1 as
+SELECT [Код типа вагона],наименование,[количество мест в вагоне]
+FROM [Тип вагона]
+exec vagon1;
+DROP PROCEDURE vagon1;
+
+/*18. Вывод [Код типа вагона] из таблицы [Тип вагона]*/
+go
+create procedure vagon2 as
+SELECT [Код типа вагона]
+FROM [Тип вагона]
+exec vagon2;
+DROP PROCEDURE vagon2;
+
+create table users (
+id integer primary key identity(1,1), 
+email varchar(200) not null,
+password varchar(200) not null,
+);
+
+/*Тригеры*/
+
+/*1. При изменений [код нас. пункта] в таблице Населенные_пункты 
+будут меняться столбец [код нас. пункта] в таблицах Маршрут,Пункт_отправления,Пункт_прибытия*/
+DROP TRIGGER Update_nasel_punkt;
+
+CREATE TRIGGER Update_nasel_punkt
+ON Населенные_пункты
+FOR UPDATE
+AS
+DECLARE   @orig_nasel_punkt int, @new_nasel_punkt int
+SELECT    @orig_nasel_punkt = [код нас. пункта] from deleted
+SELECT    @new_nasel_punkt = [код нас. пункта] from inserted
+SELECT *
+FROM     inserted
+UPDATE    Маршрут
+SET      [код нас. пункта] = @new_nasel_punkt
+FROM     inserted
+WHERE    Маршрут.[код нас. пункта] = @orig_nasel_punkt
+UPDATE    Пункт_отправления
+SET      [Код населенного пункта] = @new_nasel_punkt
+FROM     inserted
+WHERE    Пункт_отправления.[Код населенного пункта] = @orig_nasel_punkt
+UPDATE   Пункт_прибытия
+SET      [Код населенного пункта] = @new_nasel_punkt
+FROM     inserted
+WHERE    Пункт_прибытия.[Код населенного пункта] = @orig_nasel_punkt
+
+
+/*2. При изменений [Код признака] в таблице [Признак типа участка маршрута] 
+будут меняться столбец [признак типа участка маршрута] в таблице Маршрут*/
+DROP TRIGGER Update_kod_priznak;
+
+CREATE TRIGGER Update_kod_priznak
+ON [Признак типа участка маршрута]
+FOR UPDATE
+AS
+DECLARE   @orig_kod_priznak int, @new_kod_priznak int
+SELECT    @orig_kod_priznak = [Код признака] from deleted
+SELECT    @new_kod_priznak = [Код признака] from inserted
+SELECT *
+FROM     inserted
+UPDATE    Маршрут
+SET      [признак типа участка маршрута] = @new_kod_priznak
+FROM     inserted
+WHERE    Маршрут.[признак типа участка маршрута] = @orig_kod_priznak
+
+/*3. При изменений [№ рейса] в таблице Расписание 
+будут меняться столбец [№ рейса] в таблице Маршрут,Билет,Места*/
+DROP TRIGGER Update_reis;
+
+CREATE TRIGGER Update_reis
+ON Расписание
+FOR UPDATE
+AS
+DECLARE   @orig_reis int, @new_reis int
+SELECT    @orig_reis = [№ рейса] from deleted
+SELECT    @new_reis = [№ рейса] from inserted
+SELECT *
+FROM     inserted
+UPDATE    Маршрут
+SET      [№ рейса] = @new_reis
+FROM     inserted
+WHERE    Маршрут.[№ рейса] = @orig_reis
+UPDATE    Билет
+SET      [№ рейса] = @new_reis
+FROM     inserted
+WHERE    Билет.[№ рейса] = @orig_reis
+UPDATE    Места
+SET      [№ рейса] = @new_reis
+FROM     inserted
+WHERE    Места.[№ рейса] = @orig_reis
+
+/*4. При изменений [№ билета] в таблице Билет 
+будут меняться столбец [№ билета] в таблице Пункт_прибытия,Пункт_отправления*/
+DROP TRIGGER Update_bilet;
+
+CREATE TRIGGER Update_bilet
+ON Билет
+FOR UPDATE
+AS
+DECLARE   @orig_bilet int, @new_bilet int
+SELECT    @orig_bilet = [№ билета] from deleted
+SELECT    @new_bilet = [№ билета] from inserted
+SELECT *
+FROM     inserted
+UPDATE   Пункт_прибытия
+SET      [№ билета] = @new_bilet
+FROM     inserted
+WHERE    Пункт_прибытия.[№ билета] = @orig_bilet
+UPDATE   Пункт_отправления
+SET      [№ билета] = @new_bilet
+FROM     inserted
+WHERE    Пункт_отправления.[№ билета] = @orig_bilet
+
+/*5. При изменений [Код кассира] в таблице Кассир 
+будут меняться столбец [код кассира] в таблице Билет*/
+DROP TRIGGER Update_kassir;
+
+CREATE TRIGGER Update_kassir
+ON Кассир
+FOR UPDATE
+AS
+DECLARE   @orig_kassir int, @new_kassir int
+SELECT    @orig_kassir = [Код кассира] from deleted
+SELECT    @new_kassir = [Код кассира] from inserted
+SELECT *
+FROM     inserted
+UPDATE   Билет
+SET      [код кассира] = @new_kassir
+FROM     inserted
+WHERE    Билет.[код кассира] = @orig_kassir
+
+/*6. При изменений [Код типа вагона] в таблице [Тип вагона] 
+будут меняться столбец [тип вагона] в таблице Билет,Места*/
+DROP TRIGGER Update_tip_vagon;
+
+CREATE TRIGGER Update_tip_vagon
+ON [Тип вагона]
+FOR UPDATE
+AS
+DECLARE   @orig_tip_vagon int, @new_tip_vagon int
+SELECT    @orig_tip_vagon = [Код типа вагона] from deleted
+SELECT    @new_tip_vagon = [Код типа вагона] from inserted
+SELECT *
+FROM     inserted
+UPDATE   Билет
+SET      [тип вагона] = @new_tip_vagon
+FROM     inserted
+WHERE    Билет.[тип вагона] = @orig_tip_vagon
+UPDATE   Места
+SET      [тип вагона] = @new_tip_vagon
+FROM     inserted
+WHERE    Места.[тип вагона] = @orig_tip_vagon
+
+/*7. При изменений [время отправления] в таблице Расписание 
+будут меняться столбец [время отправления] в таблице Маршрут*/
+DROP TRIGGER Update_vrema_otpr;
+
+CREATE TRIGGER Update_vrema_otpr
+ON Расписание
+FOR UPDATE
+AS
+DECLARE   @orig_vrema_otpr int, @new_vrema_otpr int
+SELECT    @orig_vrema_otpr = [время отправления] from deleted
+SELECT    @new_vrema_otpr = [время отправления] from inserted
+SELECT *
+FROM     inserted
+UPDATE   Маршрут
+SET      [время отправления] = @new_vrema_otpr
+FROM     inserted
+WHERE    Маршрут.[время отправления] = @orig_vrema_otpr
+
+
+
+
+create index punkt_pribit on [Пункт_прибытия]([Код населенного пункта]);
+create index punkt_otpravl on [Пункт_отправления]([Код населенного пункта]);
+create index mesta on Места([№ рейса], [тип вагона]);
+create index bilet on Билет([№ рейса], [код кассира], [тип вагона]);
+create index marshrut on Маршрут([№ рейса], [признак типа участка маршрута], [код нас. пункта]);
+
+DROP DATABASE IF EXISTS [Билетные кассы];
+Create database [Билетные кассы];
+
+drop type if EXISTS onetype;
+CREATE TYPE onetype
+FROM varchar(40) NOT NULL;
+
+create table [Признак типа участка маршрута] (
+[Код признака] varchar(12) primary key, 
+наименование onetype not null check ((наименование = 'начальный') OR (наименование = 'промежуточный') OR (наименование = 'конечный'))
+);
+
+create table [Населенные_пункты] (
+[код нас. пункта] integer primary key identity(1,1),
+наименование onetype not null
+);
+
+create table [Пункт_прибытия] (
+[№ билета] smallint primary key, 
+[Код населенного пункта] integer not null foreign key references [Населенные_пункты]([код нас. пункта]) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+create table [Пункт_отправления] (
+[№ билета] smallint primary key, 
+[Код населенного пункта] integer not null foreign key references [Населенные_пункты]([код нас. пункта]) ON UPDATE CASCADE ON DELETE CASCADE
+); 
+
+create table [Тип вагона] (
+[Код типа вагона] smallint primary key,
+наименование onetype not null,
+[количество мест в вагоне] smallint not null check ([количество мест в вагоне] >= 0)
+);
+
+create table Расписание (
+[№ рейса] smallint primary key,
+[день недели отправления] varchar(10) not null,
+[время отправления] time not null,
+[день недели прибытия] varchar(10) not null,
+[время прибытия] time not null,
+[время в пути] time not null
+); 
+
+create table Места (
+[№ рейса] smallint not null foreign key references Расписание([№ рейса]) ON UPDATE CASCADE ON DELETE NO ACTION, 
+[№ вагона] smallint not null check ([№ вагона] > 0), 
+[тип вагона] smallint not null foreign key references [Тип вагона]([Код типа вагона]) ON UPDATE CASCADE ON DELETE NO ACTION, 
+[дата отправления] date not null, 
+[№ места] smallint check ([№ места] > 0), 
+признак onetype not null check ((признак = 'свободно') OR (признак = 'продано'))
+); 
+
+create table Кассир (
+[Код кассира] integer primary key identity(1,1), 
+[ФИО кассира] varchar(10) not null
+);  
+
+create table Билет (
+[№ билета] integer primary key, 
+[№ рейса] smallint not null foreign key references Расписание([№ рейса]) ON UPDATE CASCADE ON DELETE NO ACTION,  
+[признак продажи/возврата] onetype not null check (([признак продажи/возврата] = 'продажа') OR ([признак продажи/возврата] = 'возврат')), 
+[дата продажи/возврата] date not null, 
+[дата отправления] date not null, 
+[ФИО пассажира] varchar(10) not null, 
+[номер паспорта] varchar(12) not null unique, 
+[код кассира] integer not null  foreign key references Кассир([Код кассира]) ON UPDATE CASCADE ON DELETE NO ACTION, 
+сумма money not null check (сумма > 0), 
+[№ вагона] smallint not null check ([№ вагона] > 0), 
+[№ места] smallint not null check ([№ места] > 0), 
+[тип вагона] smallint not null foreign key references [Тип вагона]([Код типа вагона]) ON UPDATE CASCADE ON DELETE NO ACTION
+); 
+
+create table Маршрут (
+[№ рейса] smallint not null foreign key references Расписание([№ рейса]) ON UPDATE CASCADE ON DELETE NO ACTION, 
+[признак типа участка маршрута] varchar(12) not null foreign key references [Признак типа участка маршрута]([Код признака]) ON UPDATE CASCADE ON DELETE NO ACTION, 
+[№ участка рейса] smallint, 
+[код нас. пункта] integer not null foreign key references [Населенные_пункты]([код нас. пункта]) ON UPDATE CASCADE ON DELETE CASCADE, 
+[километраж участка] integer not null check ([километраж участка] > 0),  
+[время отправления] time not null
+); 
+
+
